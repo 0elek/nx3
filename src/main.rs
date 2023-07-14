@@ -3,16 +3,15 @@ use std::time::Instant;
 use threadpool::ThreadPool;
 
 fn main() {
-    let x = Arc::new(Mutex::new(1));
-    let thread_pool = ThreadPool::new(8);
-    let start = Instant::now();
+    let x: Arc<Mutex<i128>> = Arc::new(Mutex::new(1));
+    let thread_pool: ThreadPool = ThreadPool::new(8);
+    let start: Instant = Instant::now();
 
     for _ in 0..8 {
         let (range, x2) = ranger(*x.lock().unwrap());
         *x.lock().unwrap() = x2;
 
         for i in range {
-            let x = Arc::clone(&x);
             thread_pool.execute(move || {
                 let mut y = calc(i);
                 while y != 1 {
