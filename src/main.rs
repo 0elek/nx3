@@ -1,6 +1,5 @@
 use std::sync::{Arc, Mutex};
-use std::thread::sleep;
-use std::time::{Instant, Duration};
+use std::time::Instant;
 use threadpool::ThreadPool;
 
 fn main() {
