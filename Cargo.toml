@@ -7,4 +7,3 @@ edition = "2021"
 
 [dependencies]
 threadpool = "1.8.1"
-tokio = "1.29.1"
