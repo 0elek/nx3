@@ -3,7 +3,7 @@ use threadpool::ThreadPool;
 use std::thread::sleep;
 use std::time::Duration;
 
-const MAX_THREADS: usize = 8;
+const MAX_THREADS: usize = 80;
 const BATCH_SIZE: i128 = 1_000_000 - 1;
 fn main() {
 
@@ -28,7 +28,7 @@ fn main() {
                         y = calc(y);
                     }
                 }
-                drop(x_arc); // Release the lock explicitly to reduce contention
+                drop(x_arc);
             });
         }
     }
