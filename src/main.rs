@@ -1,28 +1,30 @@
 use std::sync::{Arc, Mutex};
-use std::time::Instant;
 use threadpool::ThreadPool;
+use std::thread::sleep;
+use std::time::Duration;
 
 fn main() {
-    let x: Arc<Mutex<i128>> = Arc::new(Mutex::new(1));
+    let x: Arc<Mutex<i128>> = Arc::new(Mutex::new(0));
     let thread_pool: ThreadPool = ThreadPool::new(8);
-    let start: Instant = Instant::now();
 
-    for _ in 0..8 {
-        let (range, x2) = ranger(*x.lock().unwrap());
-        *x.lock().unwrap() = x2;
-
-        for i in range {
+    loop {
+        if thread_pool.active_count() < 8 {
+            println!("threads: {}", thread_pool.active_count());
+            
+            sleep(Duration::from_millis(1));
+            
+            let (range, x2) = ranger(*x.lock().unwrap());
+            *x.lock().unwrap() = x2;
             thread_pool.execute(move || {
-                let mut y = calc(i);
-                while y != 1 {
-                    y = calc(y);
+                for i in range {
+                    let mut y = calc(i);
+                    while y != 1 {
+                        y = calc(y);
+                    }
                 }
             });
         }
     }
-
-    thread_pool.join();
-    println!("Time taken: {:?}", start.elapsed());
 }
 
 fn calc(x: i128) -> i128 {
@@ -34,6 +36,7 @@ fn calc(x: i128) -> i128 {
 }
 
 fn ranger(x3: i128) -> (std::ops::Range<i128>, i128) {
-    let end = x3 + 100000;
+    let end = x3 + 1_000_000;
+    println!("{} - {}\n", x3, end);
     (x3..end, end)
 }
