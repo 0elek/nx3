@@ -3,12 +3,15 @@ use threadpool::ThreadPool;
 use std::thread::sleep;
 use std::time::Duration;
 
+const MAX_THREADS: usize = 8;
+const BATCH_SIZE: i128 = 1_000_000;
 fn main() {
+
     let x: Arc<Mutex<i128>> = Arc::new(Mutex::new(0));
-    let thread_pool: ThreadPool = ThreadPool::new(8);
+    let thread_pool: ThreadPool = ThreadPool::new(MAX_THREADS);
 
     loop {
-        if thread_pool.active_count() < 8 {
+        if thread_pool.active_count() < MAX_THREADS {
             println!("threads: {}", thread_pool.active_count());
             
             sleep(Duration::from_millis(1));
@@ -36,7 +39,7 @@ fn calc(x: i128) -> i128 {
 }
 
 fn ranger(x3: i128) -> (std::ops::Range<i128>, i128) {
-    let end = x3 + 1_000_000;
-    println!("{} - {}\n", x3, end);
+    let end = x3 + BATCH_SIZE;
+    println!("{}", end);
     (x3..end, end)
 }
