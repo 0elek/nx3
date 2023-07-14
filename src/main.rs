@@ -1,33 +1,30 @@
 use std::sync::{Arc, Mutex};
-use std::thread::{spawn, sleep, JoinHandle};
+use std::thread::sleep;
 use std::time::{Instant, Duration};
+use threadpool::ThreadPool;
 
 fn main() {
-
     let x = Arc::new(Mutex::new(1));
-    let mut threads: Vec<JoinHandle<()>> = Vec::new();
-    // arrray of done numbers 
-
+    let thread_pool = ThreadPool::new(8);
     let start = Instant::now();
 
     for _ in 0..8 {
-        sleep(Duration::from_millis(10));
         let (range, x2) = ranger(*x.lock().unwrap());
         *x.lock().unwrap() = x2;
 
         for i in range {
-            
-            threads.push(spawn(move || {
+            let x = Arc::clone(&x);
+            thread_pool.execute(move || {
                 let mut y = calc(i);
                 while y != 1 {
                     y = calc(y);
                 }
-            }));
+            });
         }
     }
 
+    thread_pool.join();
     println!("Time taken: {:?}", start.elapsed());
-
 }
 
 fn calc(x: i128) -> i128 {
