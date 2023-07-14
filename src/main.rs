@@ -4,7 +4,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 const MAX_THREADS: usize = 8;
-const BATCH_SIZE: i128 = 1_000_000;
+const BATCH_SIZE: i128 = 1_000_000 - 1;
 fn main() {
 
     let x: Arc<Mutex<i128>> = Arc::new(Mutex::new(0));
@@ -16,15 +16,19 @@ fn main() {
             
             sleep(Duration::from_millis(1));
             
-            let (range, x2) = ranger(*x.lock().unwrap());
-            *x.lock().unwrap() = x2;
+            let x_value = *x.lock().unwrap();
+            let (start, end) = ranger(x_value);
+            *x.lock().unwrap() = end;
+            let x_arc = Arc::clone(&x);
+
             thread_pool.execute(move || {
-                for i in range {
+                for i in start..end {
                     let mut y = calc(i);
                     while y != 1 {
                         y = calc(y);
                     }
                 }
+                drop(x_arc); // Release the lock explicitly to reduce contention
             });
         }
     }
@@ -38,8 +42,9 @@ fn calc(x: i128) -> i128 {
     }
 }
 
-fn ranger(x3: i128) -> (std::ops::Range<i128>, i128) {
-    let end = x3 + BATCH_SIZE;
-    println!("{}", end);
-    (x3..end, end)
+fn ranger(x: i128) -> (i128, i128) {
+    let start = x + 1;
+    let end = start + BATCH_SIZE;
+    println!("{} - {}\n", start, end);
+    (start, end)
 }
