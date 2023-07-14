@@ -1,6 +1,5 @@
 use std::sync::{Arc, Mutex};
 use threadpool::ThreadPool;
-use std::thread::sleep;
 use std::time::Duration;
 
 const MAX_THREADS: usize = 80;
@@ -11,11 +10,11 @@ fn main() {
     let thread_pool: ThreadPool = ThreadPool::new(MAX_THREADS);
 
     loop {
-        if thread_pool.active_count() < MAX_THREADS {
+        std::thread::sleep(Duration::from_millis(100));
+        if thread_pool.active_count() <= MAX_THREADS {
             println!("threads: {}", thread_pool.active_count());
             
-            sleep(Duration::from_millis(1));
-            
+                   
             let x_value = *x.lock().unwrap();
             let (start, end) = ranger(x_value);
             *x.lock().unwrap() = end;
