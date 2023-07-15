@@ -30,8 +30,11 @@ fn main() {
 
             thread_pool.execute(move || {
                 for i in start..end {
-                    if i % 1_000_000 == 0 {
-                        println!("{} - {}", i, i + 1000_000);
+                    if i % 100_000 == 0 {
+                        let max: i128 = start - end;
+                        let done: i128 = start - i;
+                        let percentage: f64 = (done as f64 / max as f64 ) * 100.0;
+                        println!("{}%",percentage);                        
                     }
                     calc(i);
                 }
