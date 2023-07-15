@@ -1,24 +1,26 @@
 use std::sync::{Arc, Mutex};
 use threadpool::ThreadPool;
 use std::time::Duration;
+use std::collections::HashMap;
 
-const MAX_THREADS: usize = 80;
+const MAX_THREADS: usize = 8;
 const BATCH_SIZE: i128 = 1_000_000 - 1;
 fn main() {
-
+    let mut checker: Arc<Mutex<i128>> = Arc::new(Mutex::new(0));
     let x: Arc<Mutex<i128>> = Arc::new(Mutex::new(0));
     let thread_pool: ThreadPool = ThreadPool::new(MAX_THREADS);
 
     loop {
         std::thread::sleep(Duration::from_millis(100));
-        if thread_pool.active_count() <= MAX_THREADS {
-            println!("threads: {}", thread_pool.active_count());
-            
-                   
+
+        if thread_pool.active_count() <= MAX_THREADS && (*x.lock().unwrap() / BATCH_SIZE ) - *checker.lock().unwrap() <= MAX_THREADS as i128 {
+            println!("threads: {} checkers: {}", thread_pool.active_count(), *checker.lock().unwrap());
+
             let x_value = *x.lock().unwrap();
             let (start, end) = ranger(x_value);
             *x.lock().unwrap() = end;
             let x_arc = Arc::clone(&x);
+            let checker_arc = Arc::clone(&checker);
 
             thread_pool.execute(move || {
                 for i in start..end {
@@ -26,7 +28,10 @@ fn main() {
                     while y != 1 {
                         y = calc(y);
                     }
+                    
                 }
+                let mut checker = checker_arc.lock().unwrap();
+                *checker += 1;
                 drop(x_arc);
             });
         }
