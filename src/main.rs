@@ -1,20 +1,26 @@
 use std::sync::{Arc, Mutex};
-use threadpool::ThreadPool;
 use std::time::Duration;
-use std::collections::HashMap;
+use threadpool::ThreadPool;
 
-const MAX_THREADS: usize = 8;
-const BATCH_SIZE: i128 = 1_000_000 - 1;
+const MAX_THREADS: usize = 16;
+const BATCH_SIZE: i128 = (1_000_000_000_000 - 1) / MAX_THREADS as i128;
+
 fn main() {
-    let mut checker: Arc<Mutex<i128>> = Arc::new(Mutex::new(0));
+    let checker: Arc<Mutex<i128>> = Arc::new(Mutex::new(0));
     let x: Arc<Mutex<i128>> = Arc::new(Mutex::new(0));
     let thread_pool: ThreadPool = ThreadPool::new(MAX_THREADS);
 
     loop {
         std::thread::sleep(Duration::from_millis(100));
 
-        if thread_pool.active_count() <= MAX_THREADS && (*x.lock().unwrap() / BATCH_SIZE ) - *checker.lock().unwrap() <= MAX_THREADS as i128 {
-            println!("threads: {} checkers: {}", thread_pool.active_count(), *checker.lock().unwrap());
+        if thread_pool.active_count() <= MAX_THREADS - 1
+            && (*x.lock().unwrap() / BATCH_SIZE) - *checker.lock().unwrap() <= MAX_THREADS as i128
+        {
+            println!(
+                "threads: {} checkers: {}",
+                thread_pool.active_count(),
+                *checker.lock().unwrap()
+            );
 
             let x_value = *x.lock().unwrap();
             let (start, end) = ranger(x_value);
@@ -24,11 +30,10 @@ fn main() {
 
             thread_pool.execute(move || {
                 for i in start..end {
-                    let mut y = calc(i);
-                    while y != 1 {
-                        y = calc(y);
+                    if i % 1_000_000 == 0 {
+                        println!("{} - {}", i, i + 1000_000);
                     }
-                    
+                    calc(i);
                 }
                 let mut checker = checker_arc.lock().unwrap();
                 *checker += 1;
@@ -38,11 +43,18 @@ fn main() {
     }
 }
 
-fn calc(x: i128) -> i128 {
-    if x % 2 == 0 {
-        x / 2
+fn calc(x: i128) {
+    // its messy because i wanted to add caching but gave up
+    let mut y = c(x);
+    while y != 1 {
+        y = c(y);
+    }
+}
+fn c(b: i128) -> i128 {
+    if b % 2 == 0 {
+        b / 2
     } else {
-        3 * x + 1
+        3 * b + 1
     }
 }
 
